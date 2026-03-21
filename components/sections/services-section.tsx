@@ -1,4 +1,5 @@
 import { Reveal } from "@/components/motion/reveal";
+import { StaggerGroup, StaggerItem } from "@/components/motion/stagger-group";
 import { SectionHeading } from "@/components/ui/section-heading";
 import { ServiceCard } from "@/components/ui/service-card";
 import { services } from "@/lib/content";
@@ -7,26 +8,32 @@ export function ServicesSection() {
   return (
     <section id="services" className="section-pad relative">
       <div className="shell">
-        <Reveal className="mb-14">
+        <Reveal className="mb-14 flex flex-col gap-8 lg:flex-row lg:items-end lg:justify-between">
           <SectionHeading
             eyebrow="Core Services"
-            title="Software, systems, and infrastructure services designed for forward motion."
-            description="From custom platforms to modernization and cloud delivery support, Feepost aligns engineering capability with operational objectives across government and enterprise environments."
+            title="Six core service lines built for secure software, systems, and infrastructure execution."
+            description="Feepost's service stack covers custom software, enterprise and government applications, systems integration, DevOps support, secure workflows, and long-horizon modernization."
           />
+          <div className="max-w-md rounded-[1.5rem] border border-white/10 bg-white/[0.03] px-5 py-5 text-sm leading-7 text-white/64 backdrop-blur-md">
+            Each service line is structured to stand alone or plug into a larger modernization
+            program, which keeps engagements agile without losing enterprise or contract readiness.
+          </div>
         </Reveal>
 
-        <div className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
-          {services.map((service, index) => (
-            <Reveal key={service.title} delay={index * 0.06}>
+        <StaggerGroup className="grid grid-cols-1 gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {services.map((service) => (
+            <StaggerItem key={service.title}>
               <ServiceCard
                 id={service.id}
                 icon={service.icon}
                 title={service.title}
                 description={service.description}
+                detailLabel={service.detailLabel}
+                details={service.details}
               />
-            </Reveal>
+            </StaggerItem>
           ))}
-        </div>
+        </StaggerGroup>
       </div>
     </section>
   );

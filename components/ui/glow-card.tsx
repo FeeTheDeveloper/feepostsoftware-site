@@ -20,13 +20,14 @@ export function GlowCard({
 }: GlowCardProps) {
   return (
     <motion.article
-      className={`glass-panel group relative overflow-hidden rounded-[1.5rem] p-6 sm:p-7 ${className}`}
+      className={`glass-panel group relative overflow-hidden rounded-[1.6rem] p-6 sm:p-7 ${className}`}
       whileHover={{ y: -6, scale: 1.01 }}
       whileTap={{ scale: 0.995 }}
     >
       <div className="pointer-events-none absolute inset-0 opacity-0 transition-opacity duration-500 group-hover:opacity-100">
-        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,229,255,0.18),transparent_38%),radial-gradient(circle_at_bottom_right,rgba(255,0,170,0.16),transparent_34%)]" />
+        <div className="absolute inset-0 bg-[radial-gradient(circle_at_top_left,rgba(0,229,255,0.18),transparent_38%),radial-gradient(circle_at_bottom_right,rgba(255,0,127,0.16),transparent_34%)]" />
       </div>
+      <div className="absolute inset-x-6 top-0 h-px bg-gradient-to-r from-transparent via-white/70 to-transparent" />
 
       {kicker ? (
         <div className="mb-5 text-[0.68rem] font-semibold uppercase tracking-[0.38em] text-cyan/80">
