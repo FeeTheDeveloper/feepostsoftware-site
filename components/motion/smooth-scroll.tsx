@@ -3,12 +3,23 @@
 import Lenis from "lenis";
 import { useReducedMotion } from "framer-motion";
 import { useEffect } from "react";
+import {
+  isIOS,
+  isTouchDevice,
+  isMobileSafari
+} from "@/lib/browser-capabilities";
 
 export function SmoothScroll() {
   const reduceMotion = useReducedMotion() ?? false;
 
   useEffect(() => {
-    if (reduceMotion) {
+    if (
+      reduceMotion ||
+      typeof window === "undefined" ||
+      isTouchDevice() ||
+      isIOS() ||
+      isMobileSafari()
+    ) {
       return;
     }
 

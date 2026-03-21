@@ -3,6 +3,8 @@ import type { ReactNode } from "react";
 import dynamic from "next/dynamic";
 import { Orbitron, Space_Grotesk } from "next/font/google";
 import "./globals.css";
+import { ClientErrorBoundary } from "@/components/errors/client-error-boundary";
+import { SiteBackgroundFallback } from "@/components/graphics/site-background-fallback";
 import { PageIntro } from "@/components/motion/page-intro";
 import { RouteTransition } from "@/components/motion/route-transition";
 import {
@@ -134,15 +136,25 @@ export default function RootLayout({
           dangerouslySetInnerHTML={{ __html: JSON.stringify(organizationSchema) }}
         />
         <div className="site-shell">
-          <SmoothScroll />
-          <CustomCursor />
-          <SiteBackground />
-          <SoundControl />
+          <ClientErrorBoundary>
+            <SmoothScroll />
+          </ClientErrorBoundary>
+          <ClientErrorBoundary>
+            <CustomCursor />
+          </ClientErrorBoundary>
+          <ClientErrorBoundary fallback={<SiteBackgroundFallback />}>
+            <SiteBackground />
+          </ClientErrorBoundary>
+          <ClientErrorBoundary>
+            <SoundControl />
+          </ClientErrorBoundary>
           <div className="site-content">
             <PageIntro />
             <RouteTransition>{children}</RouteTransition>
           </div>
-          <AskFeepostAssistant />
+          <ClientErrorBoundary>
+            <AskFeepostAssistant />
+          </ClientErrorBoundary>
         </div>
       </body>
     </html>

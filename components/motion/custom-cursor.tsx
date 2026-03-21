@@ -2,6 +2,10 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import {
+  isTouchDevice,
+  supportsMatchMediaChangeEvent
+} from "@/lib/browser-capabilities";
 
 type Point = {
   x: number;
@@ -13,7 +17,7 @@ const TRAIL_COUNT = 6;
 export function CustomCursor() {
   const reduceMotion = useReducedMotion() ?? false;
   const [visible, setVisible] = useState(false);
-  const [pointerFine, setPointerFine] = useState(false);
+  const [canRender, setCanRender] = useState(false);
   const [position, setPosition] = useState<Point>({ x: 0, y: 0 });
   const [trail, setTrail] = useState<Point[]>(
     Array.from({ length: TRAIL_COUNT }, () => ({ x: 0, y: 0 }))
@@ -22,16 +26,31 @@ export function CustomCursor() {
   const targetRef = useRef<Point>({ x: 0, y: 0 });
 
   useEffect(() => {
+    if (reduceMotion || typeof window === "undefined") {
+      setCanRender(false);
+      return;
+    }
+
+    if (isTouchDevice() || typeof window.matchMedia !== "function") {
+      setCanRender(false);
+      return;
+    }
+
     const media = window.matchMedia("(pointer: fine)");
-    const update = () => setPointerFine(media.matches);
+    const update = () => setCanRender(media.matches && !isTouchDevice());
     update();
 
-    media.addEventListener("change", update);
-    return () => media.removeEventListener("change", update);
-  }, []);
+    if (supportsMatchMediaChangeEvent()) {
+      media.addEventListener("change", update);
+      return () => media.removeEventListener("change", update);
+    }
+
+    media.addListener(update);
+    return () => media.removeListener(update);
+  }, [reduceMotion]);
 
   useEffect(() => {
-    if (!pointerFine || reduceMotion) {
+    if (!canRender || reduceMotion || typeof window === "undefined") {
       return;
     }
 
@@ -39,11 +58,15 @@ export function CustomCursor() {
 
     const onMove = (event: MouseEvent) => {
       setVisible(true);
-      const next = { x: event.clientX, y: event.clientY };
-      targetRef.current = next;
+      targetRef.current = { x: event.clientX, y: event.clientY };
 
-      const target = event.target as HTMLElement | null;
-      const interactive = target?.closest(
+      const target = event.target;
+      if (!(target instanceof HTMLElement)) {
+        setActive(false);
+        return;
+      }
+
+      const interactive = target.closest(
         "a, button, [data-cursor='interactive'], [data-magnetic='true']"
       );
       setActive(Boolean(interactive));
@@ -78,7 +101,7 @@ export function CustomCursor() {
     };
 
     window.addEventListener("mousemove", onMove, { passive: true });
-    window.addEventListener("mouseout", onLeave);
+    window.addEventListener("mouseout", onLeave, { passive: true });
     frame = window.requestAnimationFrame(animate);
 
     return () => {
@@ -86,9 +109,9 @@ export function CustomCursor() {
       window.removeEventListener("mouseout", onLeave);
       window.cancelAnimationFrame(frame);
     };
-  }, [pointerFine, reduceMotion]);
+  }, [canRender, reduceMotion]);
 
-  if (!pointerFine || reduceMotion) {
+  if (!canRender || reduceMotion) {
     return null;
   }
 

@@ -2,6 +2,17 @@
 
 import { motion, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import {
+  getAudioContextConstructor,
+  isIOS,
+  isMobileSafari,
+  isTouchDevice,
+  supportsAudioContext
+} from "@/lib/browser-capabilities";
+
+type AudioContextConstructor = NonNullable<
+  ReturnType<typeof getAudioContextConstructor>
+>;
 
 type AudioGraph = {
   context: AudioContext;
@@ -25,8 +36,8 @@ function isInteractiveElement(target: EventTarget | null) {
   );
 }
 
-function createAudioGraph(): AudioGraph {
-  const context = new window.AudioContext();
+function createAudioGraph(AudioContextCtor: AudioContextConstructor): AudioGraph {
+  const context = new AudioContextCtor();
   const master = context.createGain();
   const humGain = context.createGain();
   const filter = context.createBiquadFilter();
@@ -100,37 +111,66 @@ export function SoundControl() {
   const reduceMotion = useReducedMotion() ?? false;
   const [enabled, setEnabled] = useState(true);
   const [ready, setReady] = useState(false);
+  const [supported, setSupported] = useState(false);
   const audioRef = useRef<AudioGraph | null>(null);
 
   useEffect(() => {
+    if (
+      typeof window === "undefined" ||
+      !supportsAudioContext() ||
+      reduceMotion ||
+      isTouchDevice() ||
+      isIOS() ||
+      isMobileSafari()
+    ) {
+      setSupported(false);
+      return;
+    }
+
+    setSupported(true);
+
     const stored = window.localStorage.getItem(STORAGE_KEY);
     if (stored === "false") {
       setEnabled(false);
     }
-  }, []);
+  }, [reduceMotion]);
 
   useEffect(() => {
+    if (!supported || typeof window === "undefined") {
+      return;
+    }
+
     window.localStorage.setItem(STORAGE_KEY, String(enabled));
-  }, [enabled]);
+  }, [enabled, supported]);
 
   useEffect(() => {
-    if (!enabled || reduceMotion) {
+    if (!supported || !enabled || reduceMotion || typeof window === "undefined") {
       return;
     }
 
     const unlockAudio = async () => {
-      if (!audioRef.current) {
-        audioRef.current = createAudioGraph();
-      }
+      try {
+        if (!audioRef.current) {
+          const AudioContextCtor = getAudioContextConstructor();
+          if (!AudioContextCtor) {
+            setSupported(false);
+            return;
+          }
 
-      const graph = audioRef.current;
-      if (graph.context.state === "suspended") {
-        await graph.context.resume();
-      }
+          audioRef.current = createAudioGraph(AudioContextCtor);
+        }
 
-      graph.humGain.gain.cancelScheduledValues(graph.context.currentTime);
-      graph.humGain.gain.linearRampToValueAtTime(0.012, graph.context.currentTime + 1.4);
-      setReady(true);
+        const graph = audioRef.current;
+        if (graph.context.state === "suspended") {
+          await graph.context.resume();
+        }
+
+        graph.humGain.gain.cancelScheduledValues(graph.context.currentTime);
+        graph.humGain.gain.linearRampToValueAtTime(0.012, graph.context.currentTime + 1.4);
+        setReady(true);
+      } catch {
+        setSupported(false);
+      }
     };
 
     const handleFirstGesture = () => {
@@ -146,11 +186,11 @@ export function SoundControl() {
       window.removeEventListener("pointerdown", handleFirstGesture);
       window.removeEventListener("keydown", handleFirstGesture);
     };
-  }, [enabled, reduceMotion]);
+  }, [enabled, reduceMotion, supported]);
 
   useEffect(() => {
     const graph = audioRef.current;
-    if (!graph) {
+    if (!supported || !graph) {
       return;
     }
 
@@ -159,9 +199,13 @@ export function SoundControl() {
       enabled && !reduceMotion ? 0.012 : 0.0001,
       graph.context.currentTime + 0.6
     );
-  }, [enabled, reduceMotion]);
+  }, [enabled, reduceMotion, supported]);
 
   useEffect(() => {
+    if (!supported) {
+      return;
+    }
+
     const handlePointerDown = (event: PointerEvent) => {
       if (!enabled || !ready || reduceMotion || !audioRef.current) {
         return;
@@ -189,7 +233,7 @@ export function SoundControl() {
       window.removeEventListener("pointerdown", handlePointerDown);
       window.removeEventListener("keydown", handleKeyDown);
     };
-  }, [enabled, ready, reduceMotion]);
+  }, [enabled, ready, reduceMotion, supported]);
 
   useEffect(() => {
     return () => {
@@ -203,6 +247,10 @@ export function SoundControl() {
       void graph.context.close();
     };
   }, []);
+
+  if (!supported) {
+    return null;
+  }
 
   return (
     <motion.button

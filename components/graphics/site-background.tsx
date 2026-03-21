@@ -4,6 +4,13 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useReducedMotion } from "framer-motion";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import {
+  isIOS,
+  isMobileSafari,
+  isTouchDevice,
+  supportsWebGL
+} from "@/lib/browser-capabilities";
+import { SiteBackgroundFallback } from "@/components/graphics/site-background-fallback";
 
 type Pointer = {
   x: number;
@@ -76,8 +83,8 @@ function GridFloor({ reduceMotion }: { reduceMotion: boolean }) {
     const half = size / 2;
     const lines: number[] = [];
 
-    for (let i = 0; i <= divisions; i += 1) {
-      const offset = -half + i * step;
+    for (let index = 0; index <= divisions; index += 1) {
+      const offset = -half + index * step;
       lines.push(-half, 0, offset, half, 0, offset);
       lines.push(offset, 0, -half, offset, 0, half);
     }
@@ -118,33 +125,27 @@ function InstancedParticles({ pointer, reduceMotion }: SceneProps) {
   const particles = useMemo<ParticleData[]>(() => {
     const count = reduceMotion ? 520 : 1600;
 
-    return Array.from({ length: count }, (_, index) => {
-      const spreadX = 24;
-      const spreadY = 15;
-      const spreadZ = 30;
-
-      return {
-        base: new THREE.Vector3(
-          (Math.random() - 0.5) * spreadX,
-          (Math.random() - 0.5) * spreadY,
-          (Math.random() - 0.5) * spreadZ
-        ),
-        drift: new THREE.Vector3(
-          (Math.random() - 0.5) * 0.08,
-          (Math.random() - 0.5) * 0.06,
-          0.02 + Math.random() * 0.08
-        ),
-        scale: 0.02 + Math.random() * 0.05,
-        phase: index * 0.37,
-        influence: 0.15 + Math.random() * 0.45,
-        color:
-          index % 3 === 0
-            ? new THREE.Color("#00E5FF")
-            : index % 3 === 1
-              ? new THREE.Color("#FF007F")
-              : new THREE.Color("#9C27B0")
-      };
-    });
+    return Array.from({ length: count }, (_, index) => ({
+      base: new THREE.Vector3(
+        (Math.random() - 0.5) * 24,
+        (Math.random() - 0.5) * 15,
+        (Math.random() - 0.5) * 30
+      ),
+      drift: new THREE.Vector3(
+        (Math.random() - 0.5) * 0.08,
+        (Math.random() - 0.5) * 0.06,
+        0.02 + Math.random() * 0.08
+      ),
+      scale: 0.02 + Math.random() * 0.05,
+      phase: index * 0.37,
+      influence: 0.15 + Math.random() * 0.45,
+      color:
+        index % 3 === 0
+          ? new THREE.Color("#00E5FF")
+          : index % 3 === 1
+            ? new THREE.Color("#FF007F")
+            : new THREE.Color("#9C27B0")
+    }));
   }, [reduceMotion]);
 
   useEffect(() => {
@@ -157,6 +158,7 @@ function InstancedParticles({ pointer, reduceMotion }: SceneProps) {
     particles.forEach((particle, index) => {
       mesh.setColorAt(index, particle.color);
     });
+
     if (mesh.instanceColor) {
       mesh.instanceColor.needsUpdate = true;
     }
@@ -200,19 +202,21 @@ function InstancedParticles({ pointer, reduceMotion }: SceneProps) {
 
 function LightStreaks({ pointer, reduceMotion }: SceneProps) {
   const groupRef = useRef<THREE.Group | null>(null);
-  const streaks = useMemo<StreakData[]>(() => {
-    return Array.from({ length: reduceMotion ? 5 : 10 }, (_, index) => ({
-      startX: -20 - Math.random() * 8,
-      startY: -3.8 + Math.random() * 8.5,
-      z: -10 - Math.random() * 14,
-      speed: 2 + Math.random() * 2.2,
-      width: 1.8 + Math.random() * 2.4,
-      tilt: -0.52 + Math.random() * 0.24,
-      color:
-        index % 2 === 0 ? new THREE.Color("#00E5FF") : new THREE.Color("#FF007F"),
-      phase: Math.random() * Math.PI * 2
-    }));
-  }, [reduceMotion]);
+  const streaks = useMemo<StreakData[]>(
+    () =>
+      Array.from({ length: reduceMotion ? 5 : 10 }, (_, index) => ({
+        startX: -20 - Math.random() * 8,
+        startY: -3.8 + Math.random() * 8.5,
+        z: -10 - Math.random() * 14,
+        speed: 2 + Math.random() * 2.2,
+        width: 1.8 + Math.random() * 2.4,
+        tilt: -0.52 + Math.random() * 0.24,
+        color:
+          index % 2 === 0 ? new THREE.Color("#00E5FF") : new THREE.Color("#FF007F"),
+        phase: Math.random() * Math.PI * 2
+      })),
+    [reduceMotion]
+  );
 
   useFrame((state) => {
     const group = groupRef.current;
@@ -250,7 +254,6 @@ function LightStreaks({ pointer, reduceMotion }: SceneProps) {
 
 function WireStructures({ pointer, reduceMotion }: SceneProps) {
   const groupRef = useRef<THREE.Group | null>(null);
-
   const structures = useMemo(
     () => [
       { position: [-7, -1.4, -8], scale: [1.8, 1.8, 1.8], color: "#00E5FF" },
@@ -260,7 +263,6 @@ function WireStructures({ pointer, reduceMotion }: SceneProps) {
     ],
     []
   );
-
   const wireNodes = useMemo<WireNode[]>(
     () => [
       { position: [-4.8, 1.2, -8], scale: 0.09 },
@@ -272,18 +274,19 @@ function WireStructures({ pointer, reduceMotion }: SceneProps) {
     ],
     []
   );
-
-  const linePositions = useMemo(() => {
-    const values = [
-      [-4.8, 1.2, -8, -2.6, 2.4, -10],
-      [-2.6, 2.4, -10, 0.5, 1.1, -12],
-      [0.5, 1.1, -12, 3.8, 2.2, -11],
-      [3.8, 2.2, -11, 5.6, -0.6, -9],
-      [5.6, -0.6, -9, 1.8, -1.7, -7]
-    ].flat();
-
-    return new Float32Array(values);
-  }, []);
+  const linePositions = useMemo(
+    () =>
+      new Float32Array(
+        [
+          [-4.8, 1.2, -8, -2.6, 2.4, -10],
+          [-2.6, 2.4, -10, 0.5, 1.1, -12],
+          [0.5, 1.1, -12, 3.8, 2.2, -11],
+          [3.8, 2.2, -11, 5.6, -0.6, -9],
+          [5.6, -0.6, -9, 1.8, -1.7, -7]
+        ].flat()
+      ),
+    []
+  );
 
   useFrame((state) => {
     const group = groupRef.current;
@@ -364,9 +367,25 @@ function SceneContents({ pointer, reduceMotion }: SceneProps) {
 export function SiteBackground() {
   const reduceMotion = useReducedMotion() ?? false;
   const [pointer, setPointer] = useState<Pointer>({ x: 0, y: 0 });
+  const [canRenderCanvas, setCanRenderCanvas] = useState(false);
 
   useEffect(() => {
-    if (reduceMotion) {
+    if (typeof window === "undefined") {
+      setCanRenderCanvas(false);
+      return;
+    }
+
+    try {
+      const shouldUseFallback =
+        isTouchDevice() || isIOS() || isMobileSafari() || !supportsWebGL();
+      setCanRenderCanvas(!shouldUseFallback);
+    } catch {
+      setCanRenderCanvas(false);
+    }
+  }, []);
+
+  useEffect(() => {
+    if (!canRenderCanvas || reduceMotion || typeof window === "undefined") {
       return;
     }
 
@@ -379,7 +398,11 @@ export function SiteBackground() {
 
     window.addEventListener("mousemove", onMove, { passive: true });
     return () => window.removeEventListener("mousemove", onMove);
-  }, [reduceMotion]);
+  }, [canRenderCanvas, reduceMotion]);
+
+  if (!canRenderCanvas) {
+    return <SiteBackgroundFallback />;
+  }
 
   return (
     <div className="site-background" aria-hidden="true">
