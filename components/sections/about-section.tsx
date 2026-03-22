@@ -1,4 +1,6 @@
 import dynamic from "next/dynamic";
+import { ClientErrorBoundary } from "@/components/errors/client-error-boundary";
+import { DataStreamFallback } from "@/components/graphics/data-stream-fallback";
 import { Reveal } from "@/components/motion/reveal";
 import { StaggerGroup, StaggerItem } from "@/components/motion/stagger-group";
 import { CountUp } from "@/components/ui/count-up";
@@ -67,7 +69,9 @@ export function AboutSection() {
               </div>
 
               <div className="relative h-[25rem] overflow-hidden rounded-[1.55rem] border border-white/8 bg-[radial-gradient(circle_at_top,rgba(0,229,255,0.08),transparent_34%),radial-gradient(circle_at_80%_20%,rgba(255,0,127,0.08),transparent_26%),linear-gradient(180deg,rgba(4,8,18,0.98),rgba(4,4,12,0.98))] sm:h-[33rem]">
-                <DataStreamScene />
+                <ClientErrorBoundary fallback={<DataStreamFallback />}>
+                  <DataStreamScene />
+                </ClientErrorBoundary>
                 <div className="absolute inset-0 bg-[radial-gradient(circle_at_center,transparent_36%,rgba(2,2,9,0.36)_72%,rgba(2,2,9,0.82)_100%)]" />
                 <div className="absolute inset-x-[12%] top-[16%] h-px bg-gradient-to-r from-transparent via-cyan/35 to-transparent" />
                 <div className="absolute inset-x-[18%] bottom-[18%] h-px bg-gradient-to-r from-transparent via-magenta/30 to-transparent" />

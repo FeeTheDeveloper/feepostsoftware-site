@@ -3,8 +3,10 @@
 import { Float, Line, OrbitControls, Sparkles } from "@react-three/drei";
 import { Canvas, useFrame } from "@react-three/fiber";
 import { useReducedMotion } from "framer-motion";
-import { Suspense, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
+import { DataStreamFallback } from "@/components/graphics/data-stream-fallback";
+import { shouldPreferStaticExperience } from "@/lib/browser-capabilities";
 
 function RackUnit({
   position,
@@ -167,9 +169,32 @@ function RackSceneContents() {
 }
 
 export function DataStreamScene() {
+  const [canRenderCanvas, setCanRenderCanvas] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      setCanRenderCanvas(false);
+      return;
+    }
+
+    try {
+      setCanRenderCanvas(!shouldPreferStaticExperience());
+    } catch {
+      setCanRenderCanvas(false);
+    }
+  }, []);
+
+  if (!canRenderCanvas) {
+    return <DataStreamFallback />;
+  }
+
   return (
     <div className="absolute inset-0" aria-hidden="true">
-      <Canvas camera={{ position: [0, 0, 6.4], fov: 34 }} dpr={[1, 1.8]}>
+      <Canvas
+        camera={{ position: [0, 0, 6.4], fov: 34 }}
+        dpr={[1, 1.35]}
+        gl={{ antialias: false, powerPreference: "high-performance" }}
+      >
         <Suspense fallback={null}>
           <RackSceneContents />
         </Suspense>

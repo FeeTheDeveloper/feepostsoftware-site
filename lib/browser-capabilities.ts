@@ -108,3 +108,15 @@ export function getAudioContextConstructor() {
   const browserWindow = window as BrowserWindow;
   return browserWindow.AudioContext || browserWindow.webkitAudioContext || null;
 }
+
+export function shouldPreferStaticExperience() {
+  if (typeof window === "undefined") {
+    return true;
+  }
+
+  try {
+    return isTouchDevice() || isIOS() || isMobileSafari() || !supportsWebGL();
+  } catch {
+    return true;
+  }
+}

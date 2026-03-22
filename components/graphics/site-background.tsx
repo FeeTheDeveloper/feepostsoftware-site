@@ -4,13 +4,8 @@ import { Canvas, useFrame, useThree } from "@react-three/fiber";
 import { useReducedMotion } from "framer-motion";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import {
-  isIOS,
-  isMobileSafari,
-  isTouchDevice,
-  supportsWebGL
-} from "@/lib/browser-capabilities";
 import { SiteBackgroundFallback } from "@/components/graphics/site-background-fallback";
+import { shouldPreferStaticExperience } from "@/lib/browser-capabilities";
 
 type Pointer = {
   x: number;
@@ -376,9 +371,7 @@ export function SiteBackground() {
     }
 
     try {
-      const shouldUseFallback =
-        isTouchDevice() || isIOS() || isMobileSafari() || !supportsWebGL();
-      setCanRenderCanvas(!shouldUseFallback);
+      setCanRenderCanvas(!shouldPreferStaticExperience());
     } catch {
       setCanRenderCanvas(false);
     }

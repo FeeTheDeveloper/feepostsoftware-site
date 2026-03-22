@@ -8,9 +8,11 @@ import {
 } from "@react-three/drei";
 import { Canvas, useFrame, useLoader } from "@react-three/fiber";
 import { useReducedMotion } from "framer-motion";
-import { Suspense, useMemo, useRef } from "react";
+import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
 import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
+import { NetworkSceneFallback } from "@/components/graphics/network-scene-fallback";
+import { shouldPreferStaticExperience } from "@/lib/browser-capabilities";
 
 type NetworkSceneProps = {
   pointerX?: number;
@@ -469,10 +471,36 @@ export function NetworkScene({
   logoGlowBoost = 1
 }: NetworkSceneProps) {
   const reduceMotion = useReducedMotion() ?? false;
+  const [canRenderCanvas, setCanRenderCanvas] = useState(false);
+
+  useEffect(() => {
+    if (typeof window === "undefined") {
+      setCanRenderCanvas(false);
+      return;
+    }
+
+    try {
+      setCanRenderCanvas(!shouldPreferStaticExperience());
+    } catch {
+      setCanRenderCanvas(false);
+    }
+  }, []);
+
+  if (!canRenderCanvas) {
+    return (
+      <NetworkSceneFallback
+        backgroundReveal={backgroundReveal}
+        logoReveal={logoReveal}
+      />
+    );
+  }
 
   return (
     <div className="absolute inset-0" aria-hidden="true">
-      <Canvas dpr={[1, 1.8]} gl={{ alpha: true, antialias: true }}>
+      <Canvas
+        dpr={[1, 1.35]}
+        gl={{ alpha: true, antialias: false, powerPreference: "high-performance" }}
+      >
         <Suspense fallback={null}>
           <SceneContents
             pointerX={pointerX}

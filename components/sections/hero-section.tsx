@@ -3,12 +3,15 @@
 import dynamic from "next/dynamic";
 import { motion, useInView, useReducedMotion } from "framer-motion";
 import { useEffect, useRef, useState } from "react";
+import { ClientErrorBoundary } from "@/components/errors/client-error-boundary";
 import {
   createFloatTransition,
   premiumEase,
   premiumEaseSoft
 } from "@/components/motion/system";
+import { NetworkSceneFallback } from "@/components/graphics/network-scene-fallback";
 import { ActionLink } from "@/components/ui/action-link";
+import { isTouchDevice } from "@/lib/browser-capabilities";
 import { companyStatement } from "@/lib/content";
 
 const NetworkScene = dynamic(
@@ -29,7 +32,7 @@ export function HeroSection() {
   const [typedTagline, setTypedTagline] = useState(reduceMotion ? tagline : "");
 
   useEffect(() => {
-    if (reduceMotion) {
+    if (reduceMotion || isTouchDevice()) {
       return;
     }
 
@@ -135,13 +138,22 @@ export function HeroSection() {
           ...createFloatTransition(8)
         }}
       >
-        <NetworkScene
-          pointerX={pointer.x}
-          pointerY={pointer.y}
-          backgroundReveal={backgroundReady ? 1 : 0}
-          logoReveal={logoReady ? 1 : 0}
-          logoGlowBoost={heroInView ? 1 : 0.42}
-        />
+        <ClientErrorBoundary
+          fallback={
+            <NetworkSceneFallback
+              backgroundReveal={backgroundReady ? 1 : 0}
+              logoReveal={logoReady ? 1 : 0}
+            />
+          }
+        >
+          <NetworkScene
+            pointerX={pointer.x}
+            pointerY={pointer.y}
+            backgroundReveal={backgroundReady ? 1 : 0}
+            logoReveal={logoReady ? 1 : 0}
+            logoGlowBoost={heroInView ? 1 : 0.42}
+          />
+        </ClientErrorBoundary>
       </motion.div>
 
       <div className="shell relative z-20 flex min-h-screen items-center justify-center py-28">
