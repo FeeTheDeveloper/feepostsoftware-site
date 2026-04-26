@@ -6,11 +6,10 @@ import {
   PerspectiveCamera,
   Sparkles
 } from "@react-three/drei";
-import { Canvas, useFrame, useLoader } from "@react-three/fiber";
+import { Canvas, useFrame } from "@react-three/fiber";
 import { useReducedMotion } from "framer-motion";
 import { Suspense, useEffect, useMemo, useRef, useState } from "react";
 import * as THREE from "three";
-import { SVGLoader } from "three/examples/jsm/loaders/SVGLoader.js";
 import { NetworkSceneFallback } from "@/components/graphics/network-scene-fallback";
 import { shouldPreferStaticExperience } from "@/lib/browser-capabilities";
 
@@ -28,7 +27,7 @@ type SharedMotionProps = {
   reduceMotion: boolean;
 };
 
-type LogoRigProps = SharedMotionProps & {
+type EnergyCoreRigProps = SharedMotionProps & {
   logoReveal: number;
   glowBoost: number;
 };
@@ -52,6 +51,22 @@ function circlePoints(radius: number, count: number, y = 0, skew = 1) {
       Math.sin(angle) * radius * skew
     ] as [number, number, number];
   });
+}
+
+function buildOrbitalParticles(count: number, radius: number) {
+  const positions = new Float32Array(count * 3);
+
+  for (let index = 0; index < count; index += 1) {
+    const theta = Math.random() * Math.PI * 2;
+    const phi = Math.acos(2 * Math.random() - 1);
+    const spread = radius * (0.56 + Math.random() * 0.54);
+
+    positions[index * 3] = Math.sin(phi) * Math.cos(theta) * spread;
+    positions[index * 3 + 1] = Math.sin(phi) * Math.sin(theta) * spread;
+    positions[index * 3 + 2] = Math.cos(phi) * spread;
+  }
+
+  return positions;
 }
 
 function ParticleNebula({ pointerX, pointerY, reduceMotion }: SharedMotionProps) {
@@ -256,58 +271,50 @@ function CircuitBoard({
   );
 }
 
-function LogoRig({
+function EnergyCoreRig({
   pointerX,
   pointerY,
   reduceMotion,
   logoReveal,
   glowBoost
-}: LogoRigProps) {
-  const svg = useLoader(SVGLoader, "/fs-mark.svg") as { paths: THREE.ShapePath[] };
-  const meshGroupRef = useRef<THREE.Group | null>(null);
-  const particleLogoRef = useRef<THREE.Points | null>(null);
+}: EnergyCoreRigProps) {
+  const coreGroupRef = useRef<THREE.Group | null>(null);
+  const particleShellRef = useRef<THREE.Points | null>(null);
   const particleMaterialRef = useRef<THREE.PointsMaterial | null>(null);
-  const coreMaterialRef = useRef<THREE.MeshPhysicalMaterial | null>(null);
-  const haloMaterialRef = useRef<THREE.MeshBasicMaterial | null>(null);
+  const shellMaterialRef = useRef<THREE.MeshPhysicalMaterial | null>(null);
+  const wireMaterialRef = useRef<THREE.MeshBasicMaterial | null>(null);
+  const pulseMaterialRef = useRef<THREE.MeshBasicMaterial | null>(null);
+  const haloRef = useRef<THREE.Mesh | null>(null);
+  const innerCoreRef = useRef<THREE.Mesh | null>(null);
   const orbRef = useRef<THREE.Mesh | null>(null);
   const ringRef = useRef<THREE.Group | null>(null);
-
-  const logoGeometry = useMemo(() => {
-    const shapes = svg.paths.flatMap((path) => path.toShapes(true));
-    const geometry = new THREE.ExtrudeGeometry(shapes, {
-      depth: 16,
-      bevelEnabled: true,
-      bevelSegments: 4,
-      steps: 1,
-      bevelSize: 2.5,
-      bevelThickness: 1.8
-    });
-
-    geometry.center();
-    geometry.scale(0.016, -0.016, 0.016);
-    geometry.computeVertexNormals();
-
-    return geometry;
-  }, [svg.paths]);
+  const particlePositions = useMemo(() => buildOrbitalParticles(520, 1.62), []);
 
   const orbitOne = useMemo(() => circlePoints(2.35, 90, 0, 0.74), []);
   const orbitTwo = useMemo(() => circlePoints(2.7, 90, 0.08, 0.58), []);
+  const orbitThree = useMemo(() => circlePoints(2.1, 80, -0.08, 0.86), []);
 
   useFrame((state) => {
-    const logoGroup = meshGroupRef.current;
-    const particleLogo = particleLogoRef.current;
+    const coreGroup = coreGroupRef.current;
+    const particleShell = particleShellRef.current;
     const particleMaterial = particleMaterialRef.current;
-    const coreMaterial = coreMaterialRef.current;
-    const haloMaterial = haloMaterialRef.current;
+    const shellMaterial = shellMaterialRef.current;
+    const wireMaterial = wireMaterialRef.current;
+    const pulseMaterial = pulseMaterialRef.current;
+    const halo = haloRef.current;
+    const innerCore = innerCoreRef.current;
     const orb = orbRef.current;
     const rings = ringRef.current;
 
     if (
-      !logoGroup ||
-      !particleLogo ||
+      !coreGroup ||
+      !particleShell ||
       !particleMaterial ||
-      !coreMaterial ||
-      !haloMaterial ||
+      !shellMaterial ||
+      !wireMaterial ||
+      !pulseMaterial ||
+      !halo ||
+      !innerCore ||
       !orb ||
       !rings
     ) {
@@ -318,34 +325,46 @@ function LogoRig({
     const reveal = THREE.MathUtils.clamp(logoReveal, 0, 1);
     const pulse = 0.5 + Math.sin(elapsed * 2.6) * 0.5;
 
-    logoGroup.scale.setScalar(0.001 + reveal);
-    logoGroup.position.x = THREE.MathUtils.lerp(logoGroup.position.x, pointerX * 0.22, 0.05);
-    logoGroup.position.y = THREE.MathUtils.lerp(
-      logoGroup.position.y,
+    coreGroup.scale.setScalar(0.001 + reveal);
+    coreGroup.position.x = THREE.MathUtils.lerp(coreGroup.position.x, pointerX * 0.22, 0.05);
+    coreGroup.position.y = THREE.MathUtils.lerp(
+      coreGroup.position.y,
       pointerY * 0.14 + (reduceMotion ? 0 : Math.sin(elapsed * 1.2) * 0.08),
       0.05
     );
-    logoGroup.rotation.y = THREE.MathUtils.lerp(
-      logoGroup.rotation.y,
-      pointerX * 0.22 + (reduceMotion ? 0.18 : elapsed * 0.36),
+    coreGroup.rotation.y = THREE.MathUtils.lerp(
+      coreGroup.rotation.y,
+      pointerX * 0.18 + (reduceMotion ? 0.14 : elapsed * 0.28),
       0.04
     );
-    logoGroup.rotation.x = THREE.MathUtils.lerp(
-      logoGroup.rotation.x,
-      pointerY * 0.08,
+    coreGroup.rotation.x = THREE.MathUtils.lerp(
+      coreGroup.rotation.x,
+      pointerY * 0.08 + (reduceMotion ? 0 : Math.cos(elapsed * 0.52) * 0.05),
       0.05
     );
 
-    particleMaterial.opacity = 0.95 - reveal * 0.82;
-    particleLogo.scale.setScalar(1.14 - reveal * 0.14);
+    particleMaterial.opacity = 0.2 + (1 - reveal) * 0.46 + glowBoost * 0.08;
+    particleMaterial.size = reduceMotion ? 0.06 : 0.06 + pulse * 0.02;
+    particleShell.rotation.y -= reduceMotion ? 0.001 : 0.01;
+    particleShell.rotation.x = Math.sin(elapsed * 0.72) * 0.24;
 
-    coreMaterial.emissive.copy(cyan).lerp(magenta, pulse * 0.55);
-    coreMaterial.emissiveIntensity = 0.85 + glowBoost * 0.8 + pulse * (0.35 + glowBoost * 0.7);
-    coreMaterial.color.copy(cyan).lerp(magenta, 0.28 + pulse * 0.22);
+    shellMaterial.emissive.copy(cyan).lerp(magenta, 0.22 + pulse * 0.3);
+    shellMaterial.emissiveIntensity =
+      0.94 + glowBoost * 0.82 + pulse * (0.22 + glowBoost * 0.42);
+    shellMaterial.color.copy(cyan).lerp(violet, 0.18 + pulse * 0.28);
+    shellMaterial.opacity = 0.82 + pulse * 0.08;
 
-    haloMaterial.opacity = 0.12 + glowBoost * 0.16 + pulse * 0.16;
+    wireMaterial.color.copy(cyan).lerp(magenta, 0.32 + pulse * 0.32);
+    wireMaterial.opacity = 0.18 + glowBoost * 0.12 + pulse * 0.14;
+
+    pulseMaterial.color.copy(cyan).lerp(magenta, pulse * 0.62);
+    pulseMaterial.opacity = 0.1 + glowBoost * 0.12 + pulse * 0.12;
+
+    halo.scale.setScalar(1.58 + pulse * 0.08);
+    innerCore.scale.setScalar(1 + pulse * 0.14);
     rings.rotation.y += reduceMotion ? 0.002 : 0.014;
     rings.rotation.x = Math.sin(elapsed * 0.5) * 0.12;
+    rings.rotation.z = Math.cos(elapsed * 0.34) * 0.1;
 
     const orbRadius = 2.55;
     orb.position.set(
@@ -357,41 +376,59 @@ function LogoRig({
 
   return (
     <Float speed={1.6} floatIntensity={0.22} rotationIntensity={0.06}>
-      <group ref={meshGroupRef}>
-        <points ref={particleLogoRef} geometry={logoGeometry}>
+      <group ref={coreGroupRef}>
+        <points ref={particleShellRef}>
+          <bufferGeometry>
+            <bufferAttribute attach="attributes-position" args={[particlePositions, 3]} />
+          </bufferGeometry>
           <pointsMaterial
             ref={particleMaterialRef}
             color="#B8FBFF"
-            size={0.075}
+            size={0.06}
             transparent
             opacity={0.92}
             depthWrite={false}
           />
         </points>
 
-        <mesh geometry={logoGeometry}>
+        <mesh ref={haloRef} scale={[1.58, 1.58, 1.58]}>
+          <sphereGeometry args={[1.12, 42, 42]} />
+          <meshBasicMaterial ref={pulseMaterialRef} color="#9C27B0" transparent opacity={0.18} />
+        </mesh>
+
+        <mesh>
+          <icosahedronGeometry args={[1.12, 4]} />
           <meshPhysicalMaterial
-            ref={coreMaterialRef}
+            ref={shellMaterialRef}
             color="#00E5FF"
             emissive="#00E5FF"
             emissiveIntensity={1.4}
-            metalness={0.82}
-            roughness={0.16}
+            metalness={0.54}
+            roughness={0.14}
             clearcoat={1}
             clearcoatRoughness={0.12}
-          />
-        </mesh>
-
-        <mesh geometry={logoGeometry} position={[0, 0, -0.18]} scale={[1.03, 1.03, 0.92]}>
-          <meshBasicMaterial
-            ref={haloMaterialRef}
-            color="#9C27B0"
             transparent
-            opacity={0.32}
+            opacity={0.88}
           />
         </mesh>
 
-        <group ref={ringRef}>
+        <mesh ref={innerCoreRef}>
+          <sphereGeometry args={[0.56, 40, 40]} />
+          <meshBasicMaterial color="#D9FBFF" transparent opacity={0.72} />
+        </mesh>
+
+        <mesh scale={[1.34, 1.34, 1.34]}>
+          <icosahedronGeometry args={[1.04, 1]} />
+          <meshBasicMaterial
+            ref={wireMaterialRef}
+            color="#00E5FF"
+            transparent
+            opacity={0.28}
+            wireframe
+          />
+        </mesh>
+
+        <group ref={ringRef} scale={[1.02, 1.02, 1.02]}>
           <Line
             points={orbitOne}
             color="#00E5FF"
@@ -405,6 +442,14 @@ function LogoRig({
             transparent
             opacity={0.3}
             lineWidth={1}
+          />
+          <Line
+            points={orbitThree}
+            color="#9C27B0"
+            transparent
+            opacity={0.24}
+            lineWidth={0.9}
+            rotation={[Math.PI / 2.65, 0, Math.PI / 6]}
           />
           <mesh ref={orbRef}>
             <sphereGeometry args={[0.08, 20, 20]} />
@@ -452,7 +497,7 @@ function SceneContents({
         />
       </group>
 
-      <LogoRig
+      <EnergyCoreRig
         pointerX={pointerX}
         pointerY={pointerY}
         reduceMotion={reduceMotion}

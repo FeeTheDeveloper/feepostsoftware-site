@@ -1,7 +1,6 @@
 "use client";
 
 import { motion, useReducedMotion } from "framer-motion";
-import Image from "next/image";
 
 type BrandMarkProps = {
   glowActive?: boolean;
@@ -65,21 +64,36 @@ export function BrandMark({ glowActive = true }: BrandMarkProps) {
 
       <motion.div
         animate={reduceMotion ? undefined : { y: [0, -6, 0] }}
-        className="relative z-10 w-full max-w-[72rem]"
+        className="relative z-10 flex w-full max-w-[72rem] items-center justify-center"
         transition={{ duration: 6, repeat: Number.POSITIVE_INFINITY, ease: "easeInOut" }}
       >
-        <Image
-          src="/logo.png"
-          alt="Feepost Software logo"
-          width={1024}
-          height={1024}
-          priority
-          className={`h-auto w-full max-w-[40rem] transition-[filter,opacity] duration-700 ${
+        <div
+          aria-hidden="true"
+          className={`relative aspect-square w-full max-w-[16rem] overflow-hidden rounded-full border border-white/12 bg-[radial-gradient(circle_at_35%_30%,rgba(0,229,255,0.28),transparent_34%),radial-gradient(circle_at_72%_70%,rgba(255,0,127,0.22),transparent_38%),radial-gradient(circle_at_center,rgba(255,255,255,0.08),transparent_58%),linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] transition-[filter,opacity] duration-700 ${
             glowActive
               ? "opacity-100 drop-shadow-[0_0_60px_rgba(0,229,255,0.28)]"
               : "opacity-92 drop-shadow-[0_0_18px_rgba(0,229,255,0.12)]"
           }`}
-        />
+        >
+          <div className="absolute inset-[-10%] rounded-full border border-cyan/20" />
+          <div className="absolute inset-[10%] rounded-full border border-white/10 bg-black/18" />
+          <div className="absolute inset-[22%] rounded-full bg-[radial-gradient(circle,rgba(184,251,255,0.82),rgba(0,229,255,0.16)_55%,transparent_72%)] blur-[1px]" />
+          <motion.div
+            animate={reduceMotion ? undefined : { rotate: [0, 360] }}
+            className="absolute inset-[4%] rounded-full border border-magenta/18"
+            transition={{ duration: 14, repeat: Number.POSITIVE_INFINITY, ease: "linear" }}
+          />
+          <motion.div
+            animate={reduceMotion ? undefined : { x: ["-30%", "340%"] }}
+            className="absolute inset-y-0 left-[-22%] w-[18%] bg-gradient-to-r from-transparent via-white/50 to-transparent opacity-50 blur-md"
+            transition={{
+              duration: 1.3,
+              ease: [0.16, 1, 0.3, 1],
+              repeat: Number.POSITIVE_INFINITY,
+              repeatDelay: 2.6
+            }}
+          />
+        </div>
       </motion.div>
     </motion.div>
   );

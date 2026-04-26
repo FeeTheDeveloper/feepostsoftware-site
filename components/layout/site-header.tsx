@@ -1,6 +1,5 @@
 "use client";
 
-import Image from "next/image";
 import { useEffect, useState } from "react";
 import { ActionLink } from "@/components/ui/action-link";
 
@@ -32,15 +31,13 @@ export function SiteHeader() {
           }`}
         >
           <a href="#top" className="flex items-center gap-3" data-cursor="interactive">
-            <div className="relative h-10 w-10 overflow-hidden rounded-full border border-white/10 bg-white/5">
-              <Image
-                src="/logo.png"
-                alt="Feepost Software logo"
-                fill
-                sizes="40px"
-                className="object-cover"
-                priority
-              />
+            <div
+              aria-hidden="true"
+              className="relative h-10 w-10 overflow-hidden rounded-full border border-white/10 bg-[radial-gradient(circle_at_35%_30%,rgba(0,229,255,0.34),transparent_34%),radial-gradient(circle_at_70%_70%,rgba(255,0,127,0.26),transparent_38%),linear-gradient(135deg,rgba(255,255,255,0.08),rgba(255,255,255,0.02))] shadow-[0_0_28px_rgba(0,229,255,0.18)]"
+            >
+              <span className="absolute inset-0 bg-[linear-gradient(120deg,transparent,rgba(255,255,255,0.22),transparent)] opacity-40" />
+              <span className="absolute inset-[8px] rounded-full border border-white/10 bg-black/20" />
+              <span className="absolute inset-[18%] rounded-full bg-[radial-gradient(circle,rgba(184,251,255,0.8),rgba(0,229,255,0.14)_58%,transparent_72%)] blur-[1px]" />
             </div>
             <div>
               <div className="font-display text-sm uppercase tracking-[0.28em] text-white">

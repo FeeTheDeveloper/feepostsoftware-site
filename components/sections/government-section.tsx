@@ -1,5 +1,6 @@
 "use client";
 
+import Image from "next/image";
 import { motion } from "framer-motion";
 import { Reveal } from "@/components/motion/reveal";
 import { StaggerGroup, StaggerItem } from "@/components/motion/stagger-group";
@@ -103,39 +104,31 @@ export function GovernmentSection() {
               <div className="grid gap-5 self-start">
                 <div className="veteran-badge relative overflow-hidden rounded-[1.9rem] p-7 sm:p-8">
                   <div className="veteran-badge__glow absolute inset-0" />
-                  <div className="relative z-10 flex items-start gap-5">
-                    <div className="veteran-badge__shield flex h-20 w-20 shrink-0 items-center justify-center rounded-[1.5rem]">
-                      <svg viewBox="0 0 80 80" className="h-11 w-11 text-cyan" fill="none" aria-hidden="true">
-                        <path
-                          d="M40 12c8 7 16 10 24 11v18c0 15-9 27-24 33-15-6-24-18-24-33V23c8-1 16-4 24-11Z"
-                          stroke="currentColor"
-                          strokeWidth="4.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                        <path
-                          d="m29 41 7 7 15-15"
-                          stroke="currentColor"
-                          strokeWidth="4.5"
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                        />
-                      </svg>
+                  <div className="relative z-10 flex flex-col items-center text-center">
+                    <div className="rounded-[1.5rem] border border-white/10 bg-black/25 p-4 shadow-[0_0_34px_rgba(0,229,255,0.14)] sm:p-5">
+                      <Image
+                        src="/images/vep-vob-logo.png"
+                        alt="Veteran-Owned Business badge verified by the Texas Veterans Commission"
+                        width={1124}
+                        height={1276}
+                        className="h-auto w-full max-w-[240px] sm:max-w-[300px] lg:max-w-[330px]"
+                      />
                     </div>
 
-                    <div>
-                      <div className="text-[0.68rem] font-semibold uppercase tracking-[0.34em] text-magenta/78">
-                        Procurement Signal
-                      </div>
-                      <h3 className="mt-3 text-2xl font-semibold text-white sm:text-[2rem]">
-                        Veteran-Owned
-                      </h3>
-                      <p className="mt-4 max-w-md text-sm leading-7 text-white/68 sm:text-[0.98rem]">
-                        A mission-first engineering culture with a secure delivery posture designed
-                        for agencies, enterprise programs, and stakeholders who require accountable
-                        execution.
-                      </p>
+                    <div className="mt-6 text-[0.68rem] font-semibold uppercase tracking-[0.34em] text-magenta/78">
+                      Texas Veterans Commission Verified
                     </div>
+
+                    <h3 className="mt-3 text-2xl font-semibold text-white sm:text-[2rem]">
+                      Verified Veteran-Owned
+                    </h3>
+
+                    <p className="mt-4 max-w-md text-sm leading-7 text-white/68 sm:text-[0.98rem]">
+                      Feepost Software &amp; Development Corporation is proudly verified by the
+                      Texas Veterans Commission as a Veteran-Owned Business, bringing mission-first
+                      accountability to software engineering, systems development, and digital
+                      infrastructure delivery.
+                    </p>
                   </div>
                 </div>
 

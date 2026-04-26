@@ -1,7 +1,6 @@
 "use client";
 
 import { AnimatePresence, motion, useReducedMotion } from "framer-motion";
-import Image from "next/image";
 import { useEffect, useMemo, useState } from "react";
 import { premiumEase, premiumEaseSoft } from "@/components/motion/system";
 
@@ -93,19 +92,17 @@ export function PageIntro() {
               />
 
               <motion.div
-                className="page-intro__logo-mark"
+                className="page-intro__logo-mark page-intro__logo-mark--empty"
                 initial={{ opacity: 0, scale: 0.78, filter: "blur(12px)" }}
                 animate={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
                 transition={{ duration: 0.95, delay: 0.28, ease: premiumEase }}
+                aria-hidden="true"
               >
-                <Image
-                  src="/fs-mark.svg"
-                  alt="Feepost FS mark"
-                  width={320}
-                  height={220}
-                  priority
-                  className="h-auto w-[10rem] sm:w-[12rem]"
-                />
+                <div className="page-intro__energy-core">
+                  <span className="page-intro__energy-core-halo page-intro__energy-core-halo--outer" />
+                  <span className="page-intro__energy-core-halo page-intro__energy-core-halo--inner" />
+                  <span className="page-intro__energy-core-scanlines" />
+                </div>
               </motion.div>
             </div>
 

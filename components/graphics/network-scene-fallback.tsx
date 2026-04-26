@@ -1,5 +1,3 @@
-import Image from "next/image";
-
 type NetworkSceneFallbackProps = {
   backgroundReveal?: number;
   logoReveal?: number;
@@ -70,13 +68,11 @@ export function NetworkSceneFallback({
         <span className="hero-scene-fallback__light" />
         <div className="hero-scene-fallback__logo-core">
           <div className="hero-scene-fallback__logo-glow" />
-          <Image
-            src="/fs-mark.svg"
-            alt=""
-            width={320}
-            height={320}
-            className="hero-scene-fallback__logo"
-          />
+          <div className="hero-scene-fallback__energy-core">
+            <span className="hero-scene-fallback__energy-core-ring hero-scene-fallback__energy-core-ring--inner" />
+            <span className="hero-scene-fallback__energy-core-ring hero-scene-fallback__energy-core-ring--outer" />
+            <span className="hero-scene-fallback__energy-core-scanlines" />
+          </div>
         </div>
       </div>
     </div>
